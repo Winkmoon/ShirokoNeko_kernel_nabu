@@ -116,6 +116,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Kernel-${{ env.BUILD_TIME }}
-          # Use absolute path (extracted from previous logs to ensure consistency with actual path)
-          path: /home/runner/work/android_kernel_xiaomi_nabu/android_kernel_xiaomi_nabu/workdir/ak3/*.zip
+          path: ${{ github.workspace }}/workdir/ak3/*.zip
           if-no-files-found: error  # Force error on missing files for faster debugging
