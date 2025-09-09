@@ -41,7 +41,7 @@ jobs:
       - name: Get source
         run: |
           git clone --recursive https://github.com/Winkmoon/ShirokoNeko_kernel_nabu.git \
-          -b master \
+          -b KernelSU \
           --depth 1 $GITHUB_WORKSPACE/workdir/source
 
       - name: Install SukiSU
@@ -61,7 +61,8 @@ jobs:
           echo "CONFIG_MODULE_SIG_ALL=n" >> ./arch/arm64/configs/nabu_defconfig
           echo "CONFIG_KSU_TRACEPOINT_HOOK=y" >> ./arch/arm64/configs/nabu_defconfig
           echo "CONFIG_KPM=y" >> ./arch/arm64/configs/nabu_defconfig
-
+          echo "CONFIG_KALLSYMS=y" >> ./arch/arm64/configs/nabu_defconfig
+          echo "CONFIG_KALLSYMS_ALL=y" >> ./arch/arm64/configs/nabu_defconfig
       - name: Build kernel
         run: |
           # Remove duplicate KBUILD_BUILD_HOST definition (avoid redundant overwriting)
