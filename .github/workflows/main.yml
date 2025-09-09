@@ -25,7 +25,6 @@ jobs:
           sudo apt-get install -y software-properties-common
           sudo add-apt-repository -y ppa:deadsnakes/ppa
           sudo apt-get update
-          # Install zip tool to fix package dependency (critical for generating zip files)
           sudo apt-get install -y \
             git build-essential make bc python2.7 python3 \
             libncurses5-dev lib32z1-dev gcc-multilib g++-multilib \
@@ -51,7 +50,6 @@ jobs:
           rm -rf KernelSU
           curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
           cd ./KernelSU
-          # Fix expr syntax error: Remove quotes around '+' (expr requires unquoted operator for arithmetic)
           KSU_VERSION=$(expr $(/usr/bin/git rev-list --count main) + 10700)
           export KSU_VERSION=$KSU_VERSION
           sed -i "s/DKSU_VERSION=12800/DKSU_VERSION=$KSU_VERSION/" kernel/Makefile
@@ -63,9 +61,9 @@ jobs:
           echo "CONFIG_KPM=y" >> ./arch/arm64/configs/nabu_defconfig
           echo "CONFIG_KALLSYMS=y" >> ./arch/arm64/configs/nabu_defconfig
           echo "CONFIG_KALLSYMS_ALL=y" >> ./arch/arm64/configs/nabu_defconfig
+
       - name: Build kernel
         run: |
-          # Remove duplicate KBUILD_BUILD_HOST definition (avoid redundant overwriting)
           export KBUILD_BUILD_USER=${{ github.actor }}
           export ARCH=arm64
           export KBUILD_BUILD_HOST=欣然love白
@@ -89,33 +87,55 @@ jobs:
       - name: Package kernel
         if: env.CHECK_FILE_IS_OK == 'true'
         run: |
-          # Delete old ak3 directory to avoid interference from residual files
           rm -rf $GITHUB_WORKSPACE/workdir/ak3
-          # Clone AnyKernel3 for packaging
           git clone https://github.com/Winkmoon/AnyKernel3.git $GITHUB_WORKSPACE/workdir/ak3
-          # Verify Kernel Image exists before copying (prevent empty copy)
           if [ ! -f $GITHUB_WORKSPACE/workdir/source/out/arch/arm64/boot/Image ]; then
             echo "Error: Kernel Image missing during packaging!"
             exit 1
           fi
           cp $GITHUB_WORKSPACE/workdir/source/out/arch/arm64/boot/Image $GITHUB_WORKSPACE/workdir/ak3
-          # Enter ak3 directory, force zip generation in current directory (./ ensures correct path)
           cd $GITHUB_WORKSPACE/workdir/ak3
           zip -r9 ./AnyKernel3-${{ env.BUILD_TIME }}.zip ./*
-          # Verify zip package generation; exit with error and list files if missing (for debugging)
           if [ ! -f ./AnyKernel3-${{ env.BUILD_TIME }}.zip ]; then
             echo "Error: Zip package not generated!"
             echo "Current files in ak3 directory:"
             ls -la
             exit 1
           fi
-          # Print zip package info to confirm successful generation
           echo "Successfully generated zip package:"
           ls -la ./AnyKernel3-${{ env.BUILD_TIME }}.zip
 
-      - name: Upload artifacts
+      - name: Upload artifacts (备份)
         uses: actions/upload-artifact@v4
         with:
           name: Kernel-${{ env.BUILD_TIME }}
           path: ${{ github.workspace }}/workdir/ak3/*.zip
-          if-no-files-found: error  # Force error on missing files for faster debugging
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: kernel-${{ env.BUILD_TIME }}
+          release_name: 小米平板5 HyperOS 内核 ${{ env.BUILD_TIME }}
+          draft: false
+          prerelease: false  # 是否为预发布（false = 正式版，true = 测试版）
+          body: |
+            ## 小米平板5 (nabu) HyperOS 内核构建
+            - 构建时间：${{ env.BUILD_TIME }}
+            - 集成特性：SukiSU、KSU Tracepoint Hook、KPM
+            - 打包工具：AnyKernel3
+            - 适用系统：MIUI13-HyperOS
+            - 构建环境：Ubuntu 22.04 + Proton Clang 20210522
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ github.workspace }}/workdir/ak3/AnyKernel3-${{ env.BUILD_TIME }}.zip
+          asset_name: AnyKernel3-${{ env.BUILD_TIME }}.zip
+          asset_content_type: application/zip
