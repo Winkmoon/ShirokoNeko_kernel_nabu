@@ -57,10 +57,10 @@ jobs:
           sed -i "s/DKSU_VERSION=12800/DKSU_VERSION=$KSU_VERSION/" kernel/Makefile
           cd ..
 
-          echo "CONFIG_MODULE_SIG=n" >> ./arch/arm64/configs/nabu_defconfig
-          echo "CONFIG_MODULE_SIG_ALL=n" >> ./arch/arm64/configs/nabu_defconfig
-          echo "CONFIG_KSU_TRACEPOINT_HOOK=y" >> ./arch/arm64/configs/nabu_defconfig
-          echo "CONFIG_KPM=y" >> ./arch/arm64/configs/nabu_defconfig
+          echo "CONFIG_MODULE_SIG=n" >> ./arch/arm64/configs/nabu-perf_defconfig
+          echo "CONFIG_MODULE_SIG_ALL=n" >> ./arch/arm64/configs/nabu-perf_defconfig
+          echo "CONFIG_KSU_TRACEPOINT_HOOK=y" >> ./arch/arm64/configs/nabu-perf_defconfig
+          echo "CONFIG_KPM=y" >> ./arch/arm64/configs/nabu-perf_defconfig
 
       - name: Build kernel
         run: |
@@ -73,7 +73,7 @@ jobs:
           export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
           export CROSS_COMPILE=aarch64-linux-gnu-
           cd $GITHUB_WORKSPACE/workdir/source
-          make O=out nabu_defconfig CC=clang
+          make O=out nabu-perf_defconfig CC=clang
           make -j$(nproc --all) O=out CC=clang LD=ld.lld
 
       - name: Verify output
