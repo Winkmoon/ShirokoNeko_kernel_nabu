@@ -32,17 +32,14 @@ jobs:
           sudo ln -sf /usr/bin/python2.7 /usr/bin/python2
           mkdir -p $GITHUB_WORKSPACE/workdir
           echo "BUILD_TIME=$(date +%Y%m%d%H%M)" >> $GITHUB_ENV
-
       - name: Get toolchain
         run: |
           git clone https://github.com/kdrag0n/proton-clang.git -b 20210522 --depth 1 $GITHUB_WORKSPACE/workdir/clang
-
       - name: Get source
         run: |
           git clone --recursive https://github.com/Winkmoon/ShirokoNeko_kernel_nabu.git \
           -b KernelSU \
           --depth 1 $GITHUB_WORKSPACE/workdir/source
-
       - name: Install SukiSU
         run: |
           cd $GITHUB_WORKSPACE/workdir/source
@@ -54,16 +51,12 @@ jobs:
           export KSU_VERSION=$KSU_VERSION
           sed -i "s/DKSU_VERSION=12800/DKSU_VERSION=$KSU_VERSION/" kernel/Makefile
           cd ..
-          echo "CONFIG_MODULE_SIG=y" >> ./arch/arm64/configs/nabu_defconfig
-          echo "CONFIG_MODULE_SIG_ALL=y" >> ./arch/arm64/configs/nabu_defconfig
+          echo "CONFIG_MODULE_SIG=n" >> ./arch/arm64/configs/nabu_defconfig
+          echo "CONFIG_MODULE_SIG_ALL=n" >> ./arch/arm64/configs/nabu_defconfig
+          echo "CONFIG_KSU_TRACEPOINT_HOOK=y" >> ./arch/arm64/configs/nabu_defconfig
+          echo "CONFIG_KPM=y" >> ./arch/arm64/configs/nabu_defconfig
           echo "CONFIG_KALLSYMS=y" >> ./arch/arm64/configs/nabu_defconfig
           echo "CONFIG_KALLSYMS_ALL=y" >> ./arch/arm64/configs/nabu_defconfig
-          echo "CONFIG_KPROBES=y" >> ./arch/arm64/configs/nabu_defconfig
-          echo "CONFIG_HAVE_KPROBES=y" >> ./arch/arm64/configs/nabu_defconfig
-          echo "CONFIG_KSU=y" >> ./arch/arm64/configs/nabu_defconfig
-          echo "CONFIG_KSU=y" >> ./arch/arm64/configs/nabu_defconfig
-          echo "CONFIG_KSU_TRACEPOINT_HOOK=y" >> ./arch/arm64/configs/nabu_defconfig
-
       - name: Build kernel
         run: |
           export KBUILD_BUILD_USER=${{ github.actor }}
@@ -76,7 +69,6 @@ jobs:
           cd $GITHUB_WORKSPACE/workdir/source
           make O=out nabu_defconfig CC=clang
           make -j$(nproc --all) O=out CC=clang LD=ld.lld
-
       - name: Verify output
         run: |
           if [ -f $GITHUB_WORKSPACE/workdir/source/out/arch/arm64/boot/Image ]; then
@@ -85,7 +77,6 @@ jobs:
             echo "Error: Kernel Image not generated!"
             exit 1
           fi
-
       - name: Package kernel
         if: env.CHECK_FILE_IS_OK == 'true'
         run: |
@@ -106,7 +97,6 @@ jobs:
           fi
           echo "Successfully generated zip package:"
           ls -la ./AnyKernel3-${{ env.BUILD_TIME }}.zip
-
       - name: Upload artifacts (备份)
         uses: actions/upload-artifact@v4
         with:
@@ -131,7 +121,6 @@ jobs:
             - 打包工具：AnyKernel3
             - 适用系统：MIUI13-HyperOS
             - 构建环境：Ubuntu 22.04 + Proton Clang 20210522
-
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
