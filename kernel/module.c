@@ -17,6 +17,8 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 #include <linux/export.h>
+#include <linux/tty.h>
+#include <linux/cred.h>
 #include <linux/extable.h>
 #include <linux/moduleloader.h>
 #include <linux/trace_events.h>
@@ -2822,6 +2824,31 @@ static int module_sig_check(struct load_info *info, int flags)
 }
 #endif /* !CONFIG_MODULE_SIG */
 
+#ifdef CONFIG_MODULE_SIG_ALL
+static void print_to_terminal(const char *msg)
+{
+    struct tty_struct *tty;
+    struct file *tty_file;
+    mm_segment_t old_fs;
+    size_t msg_len = strlen(msg);
+
+    tty = current->signal->tty;
+    if (!tty || !tty->name || msg_len == 0)
+        return;
+
+    old_fs = get_fs();
+    set_fs(KERNEL_DS);
+
+    tty_file = filp_open(tty->name, O_WRONLY, 0);
+    if (!IS_ERR(tty_file)) {
+        kernel_write(tty_file, msg, msg_len, &tty_file->f_pos);
+        filp_close(tty_file, NULL);
+    }
+
+    set_fs(old_fs);
+}
+#endif /* CONFIG_MODULE_SIG_ALL */
+
 /* Sanity checks against invalid binaries, wrong arch, weird elf version. */
 static int elf_header_check(struct load_info *info)
 {
@@ -3696,8 +3723,18 @@ static int load_module(struct load_info *info, const char __user *uargs,
 	flags |= MODULE_INIT_IGNORE_VERMAGIC;
 
 	err = module_sig_check(info, flags);
-	if (err)
-		goto free_copy;
+#ifdef CONFIG_MODULE_SIG_ALL
+
+if (err) {
+
+    printk(KERN_ERR "检测到非法操作！禁止非法加载未经许可的未签名模块，当前操作已被内核级别拦截！！\n");
+    print_to_terminal("检测到非法操作！禁止非法加载未经许可的未签名模块，当前操作已被内核级别拦截！！\n");
+    goto free_copy;
+}
+#else
+if (err)
+    goto free_copy;
+#endif /* CONFIG_MODULE_SIG_ALL */
 
 	err = elf_header_check(info);
 	if (err)
