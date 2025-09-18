@@ -1,4 +1,4 @@
-name: 构建小米平板5 hyperOS-kernel
+name: 构建小米平板5 hyperOS-kernel-next
 
 on:
   workflow_dispatch:
@@ -45,11 +45,11 @@ jobs:
           cd $GITHUB_WORKSPACE/workdir/source
           sed -i "\$s|echo \"\\\$res\"|echo \"-Xinran_StarBai_nabu\"|" ./scripts/setlocalversion
           rm -rf KernelSU
-          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
-          cd ./KernelSU
-          KSU_VERSION=$(expr $(/usr/bin/git rev-list --count main) + 10700)
-          export KSU_VERSION=$KSU_VERSION
-          sed -i "s/DKSU_VERSION=12800/DKSU_VERSION=$KSU_VERSION/" kernel/Makefile
+          curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh" | bash -s next
+          cd KernelSU-Next
+          KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
+          echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
+          sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
           cd ..
           echo "CONFIG_MODULE_SIG=n" >> ./arch/arm64/configs/nabu_defconfig
           echo "CONFIG_MODULE_SIG_ALL=n" >> ./arch/arm64/configs/nabu_defconfig
@@ -117,7 +117,7 @@ jobs:
           body: |
             ## 小米平板5 (nabu) HyperOS 内核构建
             - 构建时间：${{ env.BUILD_TIME }}
-            - 集成特性：SukiSU、KSU Tracepoint Hook、KPM
+            - 集成特性：KernelSU-Next
             - 打包工具：AnyKernel3
             - 适用系统：MIUI13-HyperOS
             - 构建环境：Ubuntu 22.04 + Proton Clang 20210522
