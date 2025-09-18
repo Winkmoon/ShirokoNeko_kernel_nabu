@@ -46,6 +46,12 @@ jobs:
       - name: Install SukiSU
         run: |
           cd $GITHUB_WORKSPACE/workdir/source
+          #patch
+          echo "下载module_sig补丁"
+          wget https://raw.githubusercontent.com/Winkmoon/android_kernel_module_sig_patch/main/module_sig.patch
+          echo "将module_sig补丁patch到内核源码"
+          patch -p1 < module_sig.patch
+          echo "自行验证是否成功"
           sed -i "\$s|echo \"\\\$res\"|echo \"-Xinran_StarBai_nabu\"|" ./scripts/setlocalversion
           rm -rf KernelSU
           curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
@@ -55,8 +61,8 @@ jobs:
           sed -i "s/DKSU_VERSION=12800/DKSU_VERSION=$KSU_VERSION/" kernel/Makefile
           cd ..
 
-          echo "CONFIG_MODULE_SIG=n" >> ./arch/arm64/configs/nabu_defconfig
-          echo "CONFIG_MODULE_SIG_ALL=n" >> ./arch/arm64/configs/nabu_defconfig
+          echo "CONFIG_MODULE_SIG=y" >> ./arch/arm64/configs/nabu_defconfig
+          echo "CONFIG_MODULE_SIG_ALL=y" >> ./arch/arm64/configs/nabu_defconfig
           echo "CONFIG_KSU_TRACEPOINT_HOOK=y" >> ./arch/arm64/configs/nabu_defconfig
           echo "CONFIG_KPM=y" >> ./arch/arm64/configs/nabu_defconfig
           echo "CONFIG_KALLSYMS=y" >> ./arch/arm64/configs/nabu_defconfig
