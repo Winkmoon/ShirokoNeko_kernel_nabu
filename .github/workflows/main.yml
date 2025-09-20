@@ -40,7 +40,7 @@ jobs:
           git clone --recursive https://github.com/Winkmoon/ShirokoNeko_kernel_nabu.git \
           -b KernelSU \
           --depth 1 $GITHUB_WORKSPACE/workdir/source
-      - name: Install SukiSU
+      - name: Install FullKSU
         run: |
           cd $GITHUB_WORKSPACE/workdir/source
           sed -i "\$s|echo \"\\\$res\"|echo \"-Xinran_StarBai_nabu\"|" ./scripts/setlocalversion
@@ -114,13 +114,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: kernel-${{ env.BUILD_TIME }}
-          release_name: 小米平板5 HyperOS 内核 ${{ env.BUILD_TIME }}
+          release_name: 小米平板5 HyperOS 内核 ${{ env.BUILD_TIME }} FullManager
           draft: false
           prerelease: false  # 是否为预发布（false = 正式版，true = 测试版）
           body: |
             ## 小米平板5 (nabu) HyperOS 内核构建
             - 构建时间：${{ env.BUILD_TIME }}
-            - 集成特性：KernelSU-Next
+            - 集成特性：KSU-全分支管理器支持
             - 打包工具：AnyKernel3
             - 适用系统：MIUI13-HyperOS
             - 构建环境：Ubuntu 22.04 + Proton Clang 20210522
